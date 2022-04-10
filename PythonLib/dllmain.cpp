@@ -12,11 +12,9 @@ namespace PythonGALib
 {
 	// Avoid cluttering the global namespace. 
 
-	int square(int number) { return number * number; }
-
-	uint64_t to_gray(uint64_t n) {
+     uint64_t to_gray(uint64_t n) {
 		return (n ^ (n >> 1));
-	}
+     }
     // Return the inverse Gray code of n
     uint64_t inverse_gray(uint64_t n)
     {
