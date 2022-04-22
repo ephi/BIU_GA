@@ -156,34 +156,45 @@ def chromosome_stats(c, fitness_obj):
 
 
 if __name__ == '__main__':
-    N = 50
-    N_queen = 8  # if N_queen is not power of 2 then invalid chromosomes might be created
-    chromosomes = [NQueenChromosome(N_queen).randomize_value() for i in range(N)]
-    fitness_obj = NQueenFitness()
-    nqueen_population = Population(chromosomes, fitness_obj=fitness_obj,
-                                   crossover_func=GAFrameWork.uniform_binary_cross_over,
-                                   probabilities_computation_obj=GAFrameWork.MinimizationProblemComputeProbabilities()
-                                   , mutagen=GAFrameWork.BitwiseMutagen(0.00001))
-    best_fitness_history = []
-    average_fitness_history = []
-    # median_fitness_history = []
-    start = time.perf_counter()
-    for i in range(0, 50):
-        best_fitness_history.append(nqueen_population.get_best_fitness())
-        average_fitness_history.append(nqueen_population.get_average_fitness())
-        # median_fitness_history.append(nqueen_population.get_median_fitness())
-        nqueen_population.evolve()
-    end = time.perf_counter()
-    print(f"GA completed in {end - start} seconds")
-    c = nqueen_population.get_best_chromosome()
-    chromosome_stats(c, fitness_obj)
-    plt.plot(best_fitness_history, label='Best')
-    plt.plot(average_fitness_history, label="Average")
-    # plt.plot(median_fitness_history, label="Median")
-    plt.xlabel("Generation")
-    plt.ylabel('Fitness')
-    plt.legend()
-    plt.show()
+    N = [100]
+    G = [30]
+    P = [0.001]
+    E = [0.1]
+    # if N_queen is not power of 2 then invalid chromosomes might be created
+    # higher N_queen numbers(<=15) are supported but untested.
+    N_queen = 8
+    for n in N:
+        for g in G:
+            for p in P:
+                for e in E:
+                    chromosomes = [NQueenChromosome(N_queen).randomize_value() for i in range(n)]
+                    fitness_obj = NQueenFitness()
+                    nqueen_population = Population(chromosomes, fitness_obj=fitness_obj,
+                                                   crossover_func=GAFrameWork.uniform_binary_cross_over,
+                                                   probabilities_computation_obj
+                                                   =GAFrameWork.MinimizationProblemComputeProbabilities()
+                                                   , mutagen=GAFrameWork.BitwiseMutagen(p), elitism_percentage=e)
+                    best_fitness_history = []
+                    average_fitness_history = []
+                    # median_fitness_history = []
+                    start = time.perf_counter()
+                    for i in range(0, g):
+                        best_fitness_history.append(nqueen_population.get_best_fitness())
+                        average_fitness_history.append(nqueen_population.get_average_fitness())
+                        # median_fitness_history.append(nqueen_population.get_median_fitness())
+                        nqueen_population.evolve()
+                    end = time.perf_counter()
+                    print(f"GA completed in {end - start} seconds")
+                    c = nqueen_population.get_best_chromosome()
+                    chromosome_stats(c, fitness_obj)
+                    plt.plot(best_fitness_history, label='Best')
+                    plt.plot(average_fitness_history, label="Average")
+                    # plt.plot(median_fitness_history, label="Median")
+                    plt.title(f"N={n}, G={g}, P={p}, E={e}")
+                    plt.xlabel("Generation")
+                    plt.ylabel('Fitness')
+                    plt.legend()
+                    plt.show()
     # Brute force solution
 
     start = time.perf_counter()
@@ -194,5 +205,3 @@ if __name__ == '__main__':
         chromosome_stats(c, fitness_obj)
     else:
         print("No CSP solution was found in a reasonable time")
-
-
