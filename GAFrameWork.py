@@ -1,11 +1,21 @@
 from math import floor
-import PythonGALib
+
+try:
+    import PythonGALib
+
+    to_bin_code = PythonGALib.inverse_gray
+    to_gray_code = PythonGALib.to_gray
+except Exception as e:
+    import graycode
+
+    to_bin_code = graycode.gray_code_to_tc
+    to_gray_code = graycode.tc_to_gray_code
 import numpy as np
 
 GRAYCODE_CHROMOSOME = True
 
 
-def binary_single_point_cross_over(ca, cb):
+def binary_single_point_cross_over(ca, cb, generation):
     if type(ca) is not BitwiseChromosome or type(cb) is not BitwiseChromosome:
         raise ValueError("chromosome a / chromosome b are not bitwise chromosomes")
     if ca.get_bitsize() != cb.get_bitsize():
@@ -19,7 +29,7 @@ def binary_single_point_cross_over(ca, cb):
     return child_a, child_b
 
 
-def uniform_binary_cross_over(ca, cb):
+def uniform_binary_cross_over(ca, cb, generation):
     if not isinstance(ca, BitwiseChromosome) or not isinstance(cb, BitwiseChromosome):
         raise ValueError("chromosome a / chromosome b are not bitwise chromosomes")
     if ca.get_bitsize() != cb.get_bitsize():
@@ -47,20 +57,28 @@ def uniform_binary_cross_over(ca, cb):
 
     return ca.create_chromosome(child_a), cb.create_chromosome(child_b)
 
+
 class ProbabilitiesComputation:
-    def normalize_probabilities(self, fitnesses_arr : np.ndarray) -> np.ndarray:
+    def normalize_probabilities(self, fitnesses_arr: np.ndarray) -> np.ndarray:
         fitnesses_sum = np.sum(fitnesses_arr)
         return fitnesses_arr / fitnesses_sum
-    
-    def compute_probabilities(self, fitnesses_arr : np.ndarray) -> np.ndarray:
+
+    def compute_probabilities(self, fitnesses_arr: np.ndarray) -> np.ndarray:
         return self.normalize_probabilities(fitnesses_arr)
+
+
+class MinimizationProblemComputeProbabilities(ProbabilitiesComputation):
+    def compute_probabilities(self, fitnesses_arr: np.ndarray) -> np.ndarray:
+        epsilon = np.exp(-10)
+        converted_fitnesses_to_maximizing_problem = [1 / (f + epsilon) for f in fitnesses_arr]
+        return self.normalize_probabilities(converted_fitnesses_to_maximizing_problem)
 
 
 class Mutagen:
     def __init__(self, p=0.001):
         self.p = p
 
-    def mutate(self, c):
+    def mutate(self, c, generation):
         pass
 
 
@@ -68,7 +86,7 @@ class BitwiseMutagen(Mutagen):
     def __init__(self, p=0.001):
         super().__init__(p)
 
-    def mutate(self, c):
+    def mutate(self, c, generation):
         if not isinstance(c, BitwiseChromosome):
             raise ValueError("chromosome is not not bitwise")
         bitsize = c.get_bitsize()
@@ -89,14 +107,17 @@ class FitnessObject:
     def eval_fitness(self, chromosome):
         pass
 
+    def is_minimization_fitness(self):
+        return True
+
 
 class Population:
     def __init__(self, chromosomes,
-            fitness_obj : FitnessObject, 
-            crossover_func, 
-            mutagen : Mutagen, 
-            probabilities_computation_obj : ProbabilitiesComputation, 
-            elitism_percentage=0.01):
+                 fitness_obj: FitnessObject,
+                 crossover_func,
+                 mutagen: Mutagen,
+                 probabilities_computation_obj: ProbabilitiesComputation,
+                 elitism_percentage=0.01):
 
         self.chromosomes = chromosomes
         self.size = len(self.chromosomes)
@@ -121,6 +142,7 @@ class Population:
         if self.chromosomes_fitness is None:
             self.eval_fitness()
         return np.median(self.chromosomes_fitness)
+
     def get_average_fitness(self):
         if self.chromosomes_fitness is None:
             self.eval_fitness()
@@ -131,6 +153,19 @@ class Population:
             self.eval_fitness()
         return min(self.chromosomes_fitness)
 
+    def get_random_chromosome(self):
+        c = np.random.choice(self.chromosomes)
+        return c
+
+    def get_best_chromosome(self):
+        if self.chromosomes_fitness is None:
+            self.eval_fitness()
+        if self.fitness_obj.is_minimization_fitness():
+            optimum_index = np.argmin(self.chromosomes_fitness)
+        else:
+            optimum_index = np.argmax(self.chromosomes_fitness)
+        return self.chromosomes[optimum_index]
+
     def evolve(self):
         global GRAYCODE_CHROMOSOME
 
@@ -138,15 +173,19 @@ class Population:
         if self.chromosomes_fitness is None:
             self.eval_fitness()
 
-        new_poplation_size = 0
         new_generation = []
         # apply elitism
         elitism_size = max(floor(self.size * self.elitism_percentage), 1)
         if elitism_size % 2 != 0:
             elitism_size += 1
-            
-        weakest_indexes = np.argpartition(self.chromosomes_fitness, -elitism_size)[-elitism_size:]
-        strongest_indexes = np.argpartition(self.chromosomes_fitness, elitism_size)[:elitism_size]
+        if self.fitness_obj.is_minimization_fitness():
+            # weakest has the highest fitness/strongest has the lowest fitness
+            strongest_indexes = np.argpartition(self.chromosomes_fitness, elitism_size)[:elitism_size]
+            weakest_indexes = np.argpartition(self.chromosomes_fitness, -elitism_size)[-elitism_size:]
+        else:
+            # weakest has the lowest fitness/strongest has the highest fitness
+            strongest_indexes = np.argpartition(self.chromosomes_fitness, -elitism_size)[-elitism_size:]
+            weakest_indexes = np.argpartition(self.chromosomes_fitness, elitism_size)[:elitism_size]
         # apply graycode conversion before eltisim if needed so all the next
         # generation will have be at graycode form, so they will get converted back to binray
         # properly
@@ -251,11 +290,11 @@ class BitwiseChromosome(Chromosome):
         return self
 
     def to_gray_code(self):
-        graycoded = PythonGALib.to_gray(self.value.item())
+        graycoded = to_gray_code(self.value.item())
         self.set_value(graycoded)
 
     def to_binary_code(self):
-        self.set_value(PythonGALib.inverse_gray(self.value.item()))
+        self.set_value(to_bin_code(self.value.item()))
 
     def apply_bitsize_cast_on_value(self, value):
         return self.bit_cast_func(value)
