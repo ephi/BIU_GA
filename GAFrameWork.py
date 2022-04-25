@@ -107,8 +107,11 @@ class FitnessObject:
     def eval_fitness(self, chromosome):
         pass
 
+    def get_worst_fitness_value(self):
+        pass
+
     def is_minimization_fitness(self):
-        return True
+        pass
 
 
 class Population:
@@ -117,41 +120,38 @@ class Population:
                  crossover_func,
                  mutagen: Mutagen,
                  probabilities_computation_obj: ProbabilitiesComputation,
-                 elitism_percentage=0.01, cross_over_probability=0.7):
+				 chromosome_type,
+                 elitism_percentage=0.01, cross_over_probability=1):
 
         self.chromosomes = chromosomes
         self.size = len(self.chromosomes)
         if self.size < 1:
             raise ValueError("Population is of size 0, not allowed.")
-        if self.size % 2 == 1:
-            raise ValueError("Population is odd, not allowed.")
+        self.elitism_size = floor(self.size * elitism_percentage)
+        if (self.size - self.elitism_size) % 2 == 1:
+            raise ValueError("Number of chromosomes for crossovers is odd({0}), not allowed.".format((self.size - self.elitism_size)))
         self.chromosomes_fitness = None
         self.fitness_sum = 0
         self.crossover_func = crossover_func
         self.mutagen = mutagen
-        self.elitism_percentage = elitism_percentage
         self.fitness_obj = fitness_obj
         self.probabilities_computation_obj = probabilities_computation_obj
         self.generation_num = 0
+        self.new_generation_arr = np.ndarray(shape=self.size, dtype=chromosome_type)
         self.cross_over_probability = cross_over_probability
+        self.eval_fitness()
 
     def eval_fitness(self):
         self.chromosomes_fitness = [self.fitness_obj.eval_fitness(chromosome) for chromosome in self.chromosomes]
         self.fitness_sum = sum(self.chromosomes_fitness)
 
     def get_median_fitness(self):
-        if self.chromosomes_fitness is None:
-            self.eval_fitness()
         return np.median(self.chromosomes_fitness)
 
     def get_average_fitness(self):
-        if self.chromosomes_fitness is None:
-            self.eval_fitness()
         return self.fitness_sum / self.size
 
     def get_best_fitness(self):
-        if self.chromosomes_fitness is None:
-            self.eval_fitness()
         return min(self.chromosomes_fitness)
 
     def get_random_chromosome(self):
@@ -159,8 +159,6 @@ class Population:
         return c
 
     def get_best_chromosome(self):
-        if self.chromosomes_fitness is None:
-            self.eval_fitness()
         if self.fitness_obj.is_minimization_fitness():
             optimum_index = np.argmin(self.chromosomes_fitness)
         else:
@@ -169,24 +167,17 @@ class Population:
 
     def evolve(self):
         global GRAYCODE_CHROMOSOME
-
-        # evaluate fitness
-        if self.chromosomes_fitness is None:
-            self.eval_fitness()
-
-        new_generation = []
+        new_poplation_size = 0
         # apply elitism
-        elitism_size = max(floor(self.size * self.elitism_percentage), 1)
-        if elitism_size % 2 != 0:
-            elitism_size += 1
+
         if self.fitness_obj.is_minimization_fitness():
             # weakest has the highest fitness/strongest has the lowest fitness
-            strongest_indexes = np.argpartition(self.chromosomes_fitness, elitism_size)[:elitism_size]
-            weakest_indexes = np.argpartition(self.chromosomes_fitness, -elitism_size)[-elitism_size:]
+            strongest_indexes = np.argpartition(self.chromosomes_fitness, self.elitism_size)[:self.elitism_size]
+            weakest_indexes = np.argpartition(self.chromosomes_fitness, -self.elitism_size)[-self.elitism_size:]
         else:
             # weakest has the lowest fitness/strongest has the highest fitness
-            strongest_indexes = np.argpartition(self.chromosomes_fitness, -elitism_size)[-elitism_size:]
-            weakest_indexes = np.argpartition(self.chromosomes_fitness, elitism_size)[:elitism_size]
+            strongest_indexes = np.argpartition(self.chromosomes_fitness, -self.elitism_size)[-self.elitism_size:]
+            weakest_indexes = np.argpartition(self.chromosomes_fitness, self.elitism_size)[:self.elitism_size]
         # apply graycode conversion before eltisim if needed so all the next
         # generation will have be at graycode form, so they will get converted back to binray
         # properly
@@ -200,18 +191,19 @@ class Population:
                     GRAYCODE_CHROMOSOME = False
 
         for index in strongest_indexes:
-            new_generation.append(self.chromosomes[index])
-        weakest_chromosomes_fitness = []
-        new_poplation_size = len(weakest_indexes)
-        for index in weakest_indexes:
-            weakest_chromosomes_fitness.append((self.chromosomes[index], self.chromosomes_fitness[index]))
+            self.new_generation_arr[new_poplation_size] = self.chromosomes[index]
+            new_poplation_size += 1
+			
+        if self.elitism_size > 0:
+            for index in weakest_indexes:
+                # Actually acts the same as delete the chromosome, but giving much better performance (no memory freed or allocated)
+                self.chromosomes_fitness[index] = self.fitness_obj.get_worst_fitness_value() 
+
         # prev_generation_str = ""
         # for i, (chromosome, chromosome_fitness) in enumerate(zip(self.chromosomes, self.chromosomes_fitness)):
         #     prev_generation_str += "#" + str(i) + " :\t" + str(chromosome) + " --> " + str(chromosome_fitness) + "\n"
         # print(prev_generation_str)
-        for cf in weakest_chromosomes_fitness:
-            self.chromosomes.remove(cf[0])
-            self.chromosomes_fitness.remove(cf[1])
+        
 
         # compute probability for each
         c_probs = self.probabilities_computation_obj.compute_probabilities(self.chromosomes_fitness)
@@ -221,6 +213,10 @@ class Population:
             # select 2 for cross-over using fitness proportional selection
             chromosome_a, chromosome_b = np.random.choice(self.chromosomes, p=c_probs, size=2, replace=False)
             if np.random.uniform() < self.cross_over_probability:
+
+	            # index_a, index_b = np.random.choice(range(len(c_probs)), p=c_probs, size=2, replace=False)
+	            # chromosome_a = fitness_to_chromosome_dict[unique_fitness[index_a]]
+	            # chromosome_b = fitness_to_chromosome_dict[unique_fitness[index_b]]
                 # apply cross over between the two chromosomes
                 child_a, child_b = self.crossover_func(chromosome_a, chromosome_b, self.generation_num)
             else:
@@ -231,27 +227,23 @@ class Population:
             self.mutagen.mutate(child_b, self.generation_num)
 
             # add the children to the new generation
-            new_generation.append(child_a)
-            new_generation.append(child_b)
-
+            self.new_generation_arr[new_poplation_size] = child_a
+            self.new_generation_arr[new_poplation_size + 1] = child_b
             new_poplation_size += 2
+
         if GRAYCODE_CHROMOSOME:
             if isinstance(self.chromosomes[0], BitwiseChromosome):
                 try:
-                    for c in new_generation:
+                    for c in self.new_generation_arr:
                         c.to_binary_code()
                 except Exception as e:
                     print("GAFrameWork: unable to convert chromosome into binray code, DISABLING GRAYCODE CONVERSION")
                     GRAYCODE_CHROMOSOME = False
-        self.chromosomes = new_generation
-        self.chromosomes_fitness = None
+        self.chromosomes[:] = self.new_generation_arr[:]
         self.generation_num += 1
-        # return Population(chromosomes=new_generation, 
-        #     fitness_obj=self.fitness_obj, 
-        #     crossover_func=self.crossover_func,
-        #     mutagen=self.mutagen, 
-        #     probabilities_computation_obj=self.probabilities_computation_obj,
-        #     elitism_percentage=self.elitism_percentage)
+        
+        # evaluate fitness
+        self.eval_fitness()
 
 
 class Chromosome:

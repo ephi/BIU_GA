@@ -40,6 +40,12 @@ class NQueenFitness(GAFrameWork.FitnessObject):
                     threats += 1
         return threats
 
+    def get_worst_fitness_value(self):
+        return np.inf
+        
+    def is_minimization_fitness(self):
+        return True
+
 
 class NQueenChromosome(GAFrameWork.BitwiseChromosome):
     def __init__(self, N):
@@ -173,7 +179,9 @@ if __name__ == '__main__':
                                                    crossover_func=GAFrameWork.uniform_binary_cross_over,
                                                    probabilities_computation_obj
                                                    =GAFrameWork.MinimizationProblemComputeProbabilities()
-                                                   , mutagen=GAFrameWork.BitwiseMutagen(p), elitism_percentage=e)
+                                                   , mutagen=GAFrameWork.BitwiseMutagen(p), elitism_percentage=e,
+                                                   chromosome_type = NQueenChromosome,
+                                                   cross_over_probability=0.7)
                     best_fitness_history = []
                     average_fitness_history = []
                     # median_fitness_history = []
