@@ -117,7 +117,7 @@ class Population:
                  crossover_func,
                  mutagen: Mutagen,
                  probabilities_computation_obj: ProbabilitiesComputation,
-                 elitism_percentage=0.01):
+                 elitism_percentage=0.01, cross_over_probability=0.7):
 
         self.chromosomes = chromosomes
         self.size = len(self.chromosomes)
@@ -133,6 +133,7 @@ class Population:
         self.fitness_obj = fitness_obj
         self.probabilities_computation_obj = probabilities_computation_obj
         self.generation_num = 0
+        self.cross_over_probability = cross_over_probability
 
     def eval_fitness(self):
         self.chromosomes_fitness = [self.fitness_obj.eval_fitness(chromosome) for chromosome in self.chromosomes]
@@ -219,8 +220,12 @@ class Population:
         while new_poplation_size < self.size:
             # select 2 for cross-over using fitness proportional selection
             chromosome_a, chromosome_b = np.random.choice(self.chromosomes, p=c_probs, size=2, replace=False)
-            # apply cross over between the two chromosomes
-            child_a, child_b = self.crossover_func(chromosome_a, chromosome_b, self.generation_num)
+            if np.random.uniform() < self.cross_over_probability:
+                # apply cross over between the two chromosomes
+                child_a, child_b = self.crossover_func(chromosome_a, chromosome_b, self.generation_num)
+            else:
+                child_a = chromosome_a
+                child_b = chromosome_b
             # apply the mutation on both children
             self.mutagen.mutate(child_a, self.generation_num)
             self.mutagen.mutate(child_b, self.generation_num)
