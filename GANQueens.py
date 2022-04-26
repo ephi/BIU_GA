@@ -68,9 +68,12 @@ class NQueenChromosome(GAFrameWork.BitwiseChromosome):
         self.bit_msk = np.uint32(np.ceil(np.log2(N)))
         super().__init__(self.bit_msk * N)
 
-    def create_chromosome(self, value):
+    def create_chromosome(self, value=None):
         n_queen_chromosome = NQueenChromosome(self.N)
-        n_queen_chromosome.set_value(value)
+        if value is not None:
+            n_queen_chromosome.set_value(value)
+        else:
+            n_queen_chromosome.randomize_value()
         return n_queen_chromosome
 
     def get_bitmsk(self):

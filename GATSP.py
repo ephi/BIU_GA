@@ -62,15 +62,16 @@ class TSPChromosome(GAFrameWork.Chromosome):
         self.all_distances = all_distances
         self.full_path_length = 0
         self.temp_float_vector = np.zeros(self.chromosome_size, dtype=np.float32)
+        self.seq_num = 101
 
     def get_chromosome_size(self):
         return self.chromosome_size
 
     def get_value(self):
-        return self.cities_arr
+        return self.cities_indexed_arr
 
     def set_value(self, v):
-        self.value = v
+        self.cities_indexed_arr = v
 
     def check_for_duplicate_cities(self):  # Only for debugging
         for val in self.cities_indexed_arr:
@@ -87,6 +88,7 @@ class TSPChromosome(GAFrameWork.Chromosome):
             self.full_path_length += self.get_distance_between_cities(index, index - 1)
 
     def randomize_value(self, seq_num: int):
+        self.seq_num = seq_num
         self.cities_indexed_arr[0] = seq_num % len(self.all_cities_arr)
         # if seq_num / len(self.all_cities_arr) < 2:
 
@@ -173,6 +175,14 @@ class TSPChromosome(GAFrameWork.Chromosome):
             [self.distance_from_neighbor_cities(city_index) for city_index in indexes_to_swap])
         difference_in_distances = new_distance_from_neighbor_cities - orig_distance_from_neighbor_cities
         self.full_path_length += (difference_in_distances[0] + difference_in_distances[1])
+
+    def create_chromosome(self, value=None):
+        c = TSPChromosome(self.all_cities_arr, self.all_distances)
+        if value is None:
+            c.randomize_value(self.seq_num)
+        else:
+            c.set_value(value)
+        return c
 
     def __str__(self) -> str:
         return str(self.cities_indexed_arr)
