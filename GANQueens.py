@@ -5,10 +5,15 @@ from GAFrameWork import Population
 from matplotlib import pyplot as plt
 
 
-
 class NQueenFitness(GAFrameWork.FitnessObject):
     def __init__(self):
         pass
+
+    def get_worst_fitness_value(self):
+        return float("inf")
+
+    def is_minimization_fitness(self):
+        return True
 
     def eval_fitness(self, chromosome):
         #    0 1 2 3 4 5 6 7
@@ -43,7 +48,7 @@ class NQueenFitness(GAFrameWork.FitnessObject):
 
     def get_worst_fitness_value(self):
         return np.inf
-        
+
     def is_minimization_fitness(self):
         return True
 
@@ -163,8 +168,8 @@ def chromosome_stats(c, fitness_obj):
 
 
 if __name__ == '__main__':
-    N = [100]
-    G = [30]
+    N = [32, 64, 128, 256, 512]
+    G = [30, 40, 50]
     P = [0.001]
     E = [0.1]
     # if N_queen is not power of 2 then invalid chromosomes might be created
@@ -181,7 +186,7 @@ if __name__ == '__main__':
                                                    probabilities_computation_obj
                                                    =GAFrameWork.MinimizationProblemComputeProbabilities()
                                                    , mutagen=GAFrameWork.BitwiseMutagen(p), elitism_percentage=e,
-                                                   chromosome_type = NQueenChromosome,
+                                                   chromosome_type=NQueenChromosome,
                                                    cross_over_probability=0.7)
                     best_fitness_history = []
                     average_fitness_history = []
