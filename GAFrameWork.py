@@ -14,6 +14,7 @@ import numpy as np
 
 GRAYCODE_CHROMOSOME = True
 
+
 def binary_single_point_cross_over(ca, cb, generation):
     if type(ca) is not BitwiseChromosome or type(cb) is not BitwiseChromosome:
         raise ValueError("chromosome a / chromosome b are not bitwise chromosomes")
@@ -119,7 +120,7 @@ class Population:
                  crossover_func,
                  mutagen: Mutagen,
                  probabilities_computation_obj: ProbabilitiesComputation,
-				 chromosome_type,
+                 chromosome_type,
                  elitism_percentage=0.01, cross_over_probability=1):
 
         self.chromosomes = chromosomes
@@ -128,7 +129,8 @@ class Population:
             raise ValueError("Population is of size 0, not allowed.")
         self.elitism_size = floor(self.size * elitism_percentage)
         if (self.size - self.elitism_size) % 2 == 1:
-            raise ValueError("Number of chromosomes for crossovers is odd({0}), not allowed.".format((self.size - self.elitism_size)))
+            raise ValueError("Number of chromosomes for crossovers is odd({0}), not allowed.".format(
+                (self.size - self.elitism_size)))
         self.chromosomes_fitness = None
         self.fitness_sum = 0
         self.crossover_func = crossover_func
@@ -192,17 +194,16 @@ class Population:
         for index in strongest_indexes:
             self.new_generation_arr[new_poplation_size] = self.chromosomes[index]
             new_poplation_size += 1
-			
+
         if self.elitism_size > 0:
             for index in weakest_indexes:
                 # Actually acts the same as delete the chromosome, but giving much better performance (no memory freed or allocated)
-                self.chromosomes_fitness[index] = self.fitness_obj.get_worst_fitness_value() 
+                self.chromosomes_fitness[index] = self.fitness_obj.get_worst_fitness_value()
 
-        # prev_generation_str = ""
+                # prev_generation_str = ""
         # for i, (chromosome, chromosome_fitness) in enumerate(zip(self.chromosomes, self.chromosomes_fitness)):
         #     prev_generation_str += "#" + str(i) + " :\t" + str(chromosome) + " --> " + str(chromosome_fitness) + "\n"
         # print(prev_generation_str)
-        
 
         # compute probability for each
         c_probs = self.probabilities_computation_obj.compute_probabilities(self.chromosomes_fitness)
@@ -213,9 +214,9 @@ class Population:
             chromosome_a, chromosome_b = np.random.choice(self.chromosomes, p=c_probs, size=2, replace=False)
             if np.random.uniform() < self.cross_over_probability:
 
-	            # index_a, index_b = np.random.choice(range(len(c_probs)), p=c_probs, size=2, replace=False)
-	            # chromosome_a = fitness_to_chromosome_dict[unique_fitness[index_a]]
-	            # chromosome_b = fitness_to_chromosome_dict[unique_fitness[index_b]]
+                # index_a, index_b = np.random.choice(range(len(c_probs)), p=c_probs, size=2, replace=False)
+                # chromosome_a = fitness_to_chromosome_dict[unique_fitness[index_a]]
+                # chromosome_b = fitness_to_chromosome_dict[unique_fitness[index_b]]
                 # apply cross over between the two chromosomes
                 child_a, child_b = self.crossover_func(chromosome_a, chromosome_b, self.generation_num)
             else:
@@ -240,7 +241,7 @@ class Population:
                     GRAYCODE_CHROMOSOME = False
         self.chromosomes[:] = self.new_generation_arr[:]
         self.generation_num += 1
-        
+
         # evaluate fitness
         self.eval_fitness()
 
