@@ -5,6 +5,7 @@ from GAFrameWork import Population
 from matplotlib import pyplot as plt
 
 
+
 class NQueenFitness(GAFrameWork.FitnessObject):
     def __init__(self, N):
         self.N = N

@@ -1,5 +1,21 @@
+<<<<<<< Updated upstream
 from math import ceil, floor
 import PythonGALib
+=======
+from math import floor
+
+
+try:
+    import PythonGALib
+
+    to_bin_code = PythonGALib.inverse_gray
+    to_gray_code = PythonGALib.to_gray
+except Exception as e:
+    import graycode
+
+    to_bin_code = graycode.gray_code_to_tc
+    to_gray_code = graycode.tc_to_gray_code
+>>>>>>> Stashed changes
 import numpy as np
 
 GRAYCODE_CHROMOSOME = True
