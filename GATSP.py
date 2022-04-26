@@ -24,7 +24,7 @@ NUM_OF_GENERATIONS = 6000
 NUM_OF_CHROMOSOMES = 200
 NUM_OF_CITIES = 48
 
-def generate_all_sorting_possibilities(remaining_options : list, current_possibility_arr : list, all_possibilities_vec : list[list]):
+def generate_all_sorting_possibilities(remaining_options : list, current_possibility_arr : list, all_possibilities_vec : list):
     if len(remaining_options) == 0:
         # print(current_possibility_arr)
         all_possibilities_vec.append(current_possibility_arr.copy())
@@ -113,6 +113,7 @@ class TSPChromosome(GAFrameWork.Chromosome):
         indexes_intersection = [index for index in master_range if index in slave_range]
         if(len(indexes_intersection) == 0):
             return False
+            
         slave_indexes_to_change = [(not index in indexes_intersection) for index in slave_range]
         master_indexes_missing_in_slave_range = [index for index in master_range if not index in indexes_intersection]
         master_indexes_to_change = [(not index in indexes_intersection) for index in master_range]
