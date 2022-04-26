@@ -1,3 +1,5 @@
+from math import floor
+
 import numpy as np
 import time
 import GAFrameWork
@@ -170,9 +172,10 @@ class NQueenPopulation(GAFrameWork.Population):
                  chromosome_type,
                  elitism_percentage=0.01, cross_over_probability=1):
         super().__init__(chromosomes, fitness_obj, crossover_func, mutagen, probabilities_computation_obj
-                         , chromosome_type, elitism_percentage, cross_over_probability)
-        if self.elitism_size == 0:
-            self.elitism_size = 2
+                         , chromosome_type, elitism_percentage, cross_over_probability, assert_elitisim_size=False)
+        elitism_size = max(floor(self.size * elitism_percentage), 1)
+        if elitism_size % 2 != 0:
+            elitism_size += 1
 
 
 def chromosome_stats(c, fitness_obj):

@@ -121,16 +121,17 @@ class Population:
                  mutagen: Mutagen,
                  probabilities_computation_obj: ProbabilitiesComputation,
                  chromosome_type,
-                 elitism_percentage=0.01, cross_over_probability=1):
+                 elitism_percentage=0.01, cross_over_probability=1, assert_elitisim_size=True):
 
         self.chromosomes = chromosomes
         self.size = len(self.chromosomes)
         if self.size < 1:
             raise ValueError("Population is of size 0, not allowed.")
         self.elitism_size = floor(self.size * elitism_percentage)
-        if (self.size - self.elitism_size) % 2 == 1:
-            raise ValueError("Number of chromosomes for crossovers is odd({0}), not allowed.".format(
-                (self.size - self.elitism_size)))
+        if assert_elitisim_size:
+            if (self.size - self.elitism_size) % 2 == 1:
+                raise ValueError("Number of chromosomes for crossovers is odd({0}), not allowed.".format(
+                    (self.size - self.elitism_size)))
         self.chromosomes_fitness = None
         self.fitness_sum = 0
         self.crossover_func = crossover_func
