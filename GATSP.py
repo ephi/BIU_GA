@@ -21,7 +21,7 @@ debug_checks_dict = {
 
 }
 
-NUM_OF_GENERATIONS = 10000
+NUM_OF_GENERATIONS = 14000
 NUM_OF_CHROMOSOMES = 40
 NUM_OF_CITIES = 48
 
@@ -333,7 +333,7 @@ if __name__ == '__main__':
                                 probabilities_computation_obj=TSPComputeProbabilities(),
                                 chromosome_type=TSPChromosome,
                                 mutagen=TSPMutagen(0.0001),
-                                elitism_percentage=0.5, cross_over_probability=0.9)
+                                elitism_percentage=0.2, cross_over_probability=0.3)
     best_fitness_history = []
     best_chromosoe_history: list[TSPChromosome] = []
     average_fitness_history = []
