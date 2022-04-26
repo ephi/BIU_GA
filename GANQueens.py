@@ -161,6 +161,20 @@ def csp_n_queen(N=8):
             return None
 
 
+class NQueenPopulation(GAFrameWork.Population):
+    def __init__(self, chromosomes,
+                 fitness_obj: GAFrameWork.FitnessObject,
+                 crossover_func,
+                 mutagen: GAFrameWork.Mutagen,
+                 probabilities_computation_obj: GAFrameWork.ProbabilitiesComputation,
+                 chromosome_type,
+                 elitism_percentage=0.01, cross_over_probability=1):
+        super().__init__(chromosomes, fitness_obj, crossover_func, mutagen, probabilities_computation_obj
+                         , chromosome_type, elitism_percentage, cross_over_probability)
+        if self.elitism_size == 0:
+            self.elitism_size = 2
+
+
 def chromosome_stats(c, fitness_obj):
     c_fitness = fitness_obj.eval_fitness(c)
     print(f"Chromosome, threats={c_fitness}")
@@ -168,10 +182,10 @@ def chromosome_stats(c, fitness_obj):
 
 
 if __name__ == '__main__':
-    N = [32, 64, 128, 256, 512]
-    G = [30, 40, 50]
+    N = [200]
+    G = [30]
     P = [0.001]
-    E = [0.1]
+    E = [0.001]
     # if N_queen is not power of 2 then invalid chromosomes might be created
     # higher N_queen numbers(<=15) are supported but untested.
     N_queen = 8
@@ -181,13 +195,13 @@ if __name__ == '__main__':
                 for e in E:
                     chromosomes = [NQueenChromosome(N_queen).randomize_value() for i in range(n)]
                     fitness_obj = NQueenFitness()
-                    nqueen_population = Population(chromosomes, fitness_obj=fitness_obj,
-                                                   crossover_func=GAFrameWork.uniform_binary_cross_over,
-                                                   probabilities_computation_obj
-                                                   =GAFrameWork.MinimizationProblemComputeProbabilities()
-                                                   , mutagen=GAFrameWork.BitwiseMutagen(p), elitism_percentage=e,
-                                                   chromosome_type=NQueenChromosome,
-                                                   cross_over_probability=0.7)
+                    nqueen_population = NQueenPopulation(chromosomes, fitness_obj=fitness_obj,
+                                                         crossover_func=GAFrameWork.uniform_binary_cross_over,
+                                                         probabilities_computation_obj
+                                                         =GAFrameWork.MinimizationProblemComputeProbabilities()
+                                                         , mutagen=GAFrameWork.BitwiseMutagen(p), elitism_percentage=e
+                                                         , chromosome_type=NQueenChromosome,
+                                                         cross_over_probability=1)
                     best_fitness_history = []
                     average_fitness_history = []
                     # median_fitness_history = []
