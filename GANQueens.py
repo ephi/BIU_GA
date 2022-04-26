@@ -182,10 +182,10 @@ def chromosome_stats(c, fitness_obj):
 
 
 if __name__ == '__main__':
-    N = [200]
+    N = [500]
     G = [30]
     P = [0.001]
-    E = [0.001]
+    E = [0.1]
     # if N_queen is not power of 2 then invalid chromosomes might be created
     # higher N_queen numbers(<=15) are supported but untested.
     N_queen = 8
