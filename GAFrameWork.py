@@ -21,7 +21,13 @@ import numpy as np
 GRAYCODE_CHROMOSOME = True
 
 
+<<<<<<< Updated upstream
 def binary_single_point_cross_over(ca, cb):
+=======
+
+
+def binary_single_point_cross_over(ca, cb, generation):
+>>>>>>> Stashed changes
     if type(ca) is not BitwiseChromosome or type(cb) is not BitwiseChromosome:
         raise ValueError("chromosome a / chromosome b are not bitwise chromosomes")
     if ca.get_bitsize() != cb.get_bitsize():
