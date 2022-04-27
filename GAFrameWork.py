@@ -1,4 +1,5 @@
 from math import floor
+import copy
 
 try:
     import PythonGALib
@@ -220,8 +221,8 @@ class Population:
                 # apply cross over between the two chromosomes
                 child_a, child_b = self.crossover_func(chromosome_a, chromosome_b, self.generation_num)
             else:
-                child_a = chromosome_a
-                child_b = chromosome_b
+                child_a = copy.deepcopy(chromosome_a)
+                child_b = copy.deepcopy(chromosome_b)
             # apply the mutation on both children
             self.mutagen.mutate(child_a, self.generation_num)
             self.mutagen.mutate(child_b, self.generation_num)

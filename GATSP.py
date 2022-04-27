@@ -21,13 +21,17 @@ debug_checks_dict = {
 
 }
 
-NUM_OF_GENERATIONS = 12000
-NUM_OF_CHROMOSOMES = 40
+NUM_OF_GENERATIONS = 8000000
+NUM_OF_CHROMOSOMES = 200
 NUM_OF_CITIES = 48
+
+FIRST_FITNESS_THRESHOLD = 35000
+SHUT_FITNESS_THRESHOLD = 34000
+RUNTIME_THRESHOLD_IN_SEC = 1000
 
 
 def generate_all_sorting_possibilities(remaining_options: list, current_possibility_arr: list,
-                                       all_possibilities_vec: list[list]):
+                                       all_possibilities_vec: list):
     if len(remaining_options) == 0:
         # print(current_possibility_arr)
         all_possibilities_vec.append(current_possibility_arr.copy())
@@ -86,26 +90,30 @@ class TSPChromosome(GAFrameWork.Chromosome):
         for index in range(self.chromosome_size):
             self.full_path_length += self.get_distance_between_cities(index, index - 1)
 
-    def randomize_value(self, seq_num: int):
+    def randomize_value(self):#, seq_num: int):
+        self.cities_indexed_arr  = np.array(range(self.chromosome_size))
+        np.random.shuffle(self.cities_indexed_arr)
+        self.recalculate_distance_from_first_city()
+        return self
         self.cities_indexed_arr[0] = seq_num % len(self.all_cities_arr)
-        # if seq_num / len(self.all_cities_arr) < 2:
+        if seq_num / len(self.all_cities_arr) < 2:
 
-        #     for i in range(self.chromosome_size - 1):
-        #         min_dis_index = np.argmin(self.all_distances[self.cities_indexed_arr[i], :])
-        #         self.cities_indexed_arr[i+1] = min_dis_index
-        #         self.all_distances[self.cities_indexed_arr[i], :] = np.inf
-        #         self.all_distances[:, self.cities_indexed_arr[i]] = np.inf
+            for i in range(self.chromosome_size - 1):
+                min_dis_index = np.argmin(self.all_distances[self.cities_indexed_arr[i], :])
+                self.cities_indexed_arr[i+1] = min_dis_index
+                self.all_distances[self.cities_indexed_arr[i], :] = np.inf
+                self.all_distances[:, self.cities_indexed_arr[i]] = np.inf
 
-        #     calculate_all_distances(self.all_cities_arr, self.all_distances)
-        #     if seq_num >= self.chromosome_size:
-        #         self.cities_indexed_arr = self.cities_indexed_arr[::-1]
-        # else:
-        all_cities_indexes_reduced = np.array(range(self.chromosome_size))
-        all_cities_indexes_reduced = np.delete(all_cities_indexes_reduced, self.cities_indexed_arr[0])
-        rand_city_places = np.random.randint(0, range(self.chromosome_size - 1, 0, -1))
-        for i, rand_city_place in enumerate(rand_city_places):
-            self.cities_indexed_arr[i + 1] = all_cities_indexes_reduced[rand_city_place - 1]
-            all_cities_indexes_reduced = np.delete(all_cities_indexes_reduced, rand_city_place - 1)
+            calculate_all_distances(self.all_cities_arr, self.all_distances)
+            if seq_num >= self.chromosome_size:
+                self.cities_indexed_arr = self.cities_indexed_arr[::-1]
+        else:
+            all_cities_indexes_reduced = np.array(range(self.chromosome_size))
+            all_cities_indexes_reduced = np.delete(all_cities_indexes_reduced, self.cities_indexed_arr[0])
+            rand_city_places = np.random.randint(0, range(self.chromosome_size - 1, 0, -1))
+            for i, rand_city_place in enumerate(rand_city_places):
+                self.cities_indexed_arr[i + 1] = all_cities_indexes_reduced[rand_city_place - 1]
+                all_cities_indexes_reduced = np.delete(all_cities_indexes_reduced, rand_city_place - 1)
 
         self.recalculate_distance_from_first_city()
 
@@ -191,9 +199,9 @@ class TSPMutagen(GAFrameWork.Mutagen):
             self.chromosome_size = chromosome.get_chromosome_size()
             self.chromosome_indexes_range = range(self.chromosome_size)
         if severity < self.p:
-            # for i in range(1 + round(severity / self.p)):
-            indexes_to_swap = np.random.choice(self.chromosome_indexes_range, size=2, replace=False)
-            chromosome.swap_two_cities(indexes_to_swap)
+            for i in range(1 + round(severity / (self.p*2))):
+                indexes_to_swap = np.random.choice(self.chromosome_indexes_range, size=2, replace=False)
+                chromosome.swap_two_cities(indexes_to_swap)
 
 
 class TSPFitness(GAFrameWork.FitnessObject):
@@ -246,8 +254,8 @@ def tsp_crossover(chromosome_1: TSPChromosome, chromosome_2: TSPChromosome, gene
     # #     print()
     # return new_child_1, new_child_2
 
-    range_length_to_swap = np.random.randint(2, chromosome_size / 2, dtype=np.uint8)
-    # range_length_to_swap = chromosome_size/2
+    range_length_to_swap = np.random.randint(6, chromosome_size / 2, dtype=np.uint8)
+    # range_length_to_swap = chromosome_size/4
 
     range_start_1 = np.random.randint(chromosome_size, dtype=np.uint8)
     range_start_2 = np.random.randint(chromosome_size, dtype=np.uint8)
@@ -325,40 +333,74 @@ if __name__ == '__main__':
     #         min_fitness = chromosome_fitness
     #         min_fitness_chromosome = chromosome
 
-    randomized_chromosomes = [
-        TSPChromosome(all_cities_arr=all_cities_arr, all_distances=all_distances).randomize_value(i + 100) for i in
-        range(NUM_OF_CHROMOSOMES)]
-    tsp_population = Population(randomized_chromosomes.copy(), fitness_obj=TSPFitness(),
+        
+    for k in range(3):
+        randomized_chromosomes = [
+            TSPChromosome(all_cities_arr=all_cities_arr, all_distances=all_distances).randomize_value()#i + 100) 
+                for i in range(NUM_OF_CHROMOSOMES)]
+        tsp_population = Population(randomized_chromosomes.copy(), fitness_obj=TSPFitness(),
                                 crossover_func=tsp_crossover,
                                 probabilities_computation_obj=TSPComputeProbabilities(),
                                 chromosome_type=TSPChromosome,
-                                mutagen=TSPMutagen(0.0001),
-                                elitism_percentage=0.2, cross_over_probability=0.3)
-    best_fitness_history = []
-    best_chromosoe_history: list[TSPChromosome] = []
-    average_fitness_history = []
-    median_fitness_history = []
-    sum_time = 0
-    delta_time = 0
-    total_start_time = time()
-    for i in range(0, NUM_OF_GENERATIONS):
-        start_time = time()
-        best_fitness = tsp_population.get_best_fitness()
-        average_fitness = tsp_population.get_average_fitness()
-        median_fitness = tsp_population.get_median_fitness()
-        best_fitness_history.append(best_fitness)
-        average_fitness_history.append(average_fitness)
-        median_fitness_history.append(median_fitness)
-        best_chromosoe_history.append(tsp_population.get_best_chromosome())
-        tsp_population.evolve()
-        end_time = time()
-        delta_time = end_time - start_time
-        sum_time += delta_time
-        if (i + 1) % 100 == 0:
-            print("Generetion #{0}\tbest = {1}\taverage = {2}\ttime = {3}\t avg = {4}".format(i + 1, best_fitness,
-                                                                                              average_fitness,
-                                                                                              delta_time,
-                                                                                              sum_time / (i + 1)))
+                                mutagen=TSPMutagen(40/NUM_OF_CHROMOSOMES),
+                                elitism_percentage=(8/NUM_OF_CHROMOSOMES), cross_over_probability=0.8)
+                                    # mutagen=TSPMutagen(10/NUM_OF_CHROMOSOMES),
+                                    # elitism_percentage=(4/NUM_OF_CHROMOSOMES), cross_over_probability=0.5)
+        best_fitness_history = []
+        best_chromosoe_history: list[TSPChromosome] = []
+        average_fitness_history = []
+        median_fitness_history = []
+        avg_time_history = []
+        sum_time = 0
+        delta_time = 0
+        time_at_first_fitness_threshold = -1
+        generetion_at_first_fitness_threshold = -1
+        total_start_time = time()
+        passed_first_fitness_threshold = False
+        best_fitness = 0
+        for i in range(0, NUM_OF_GENERATIONS):
+            best_fitness = tsp_population.get_best_fitness()
+            average_fitness = tsp_population.get_average_fitness()
+            median_fitness = tsp_population.get_median_fitness()
+            best_fitness_history.append(best_fitness)
+            average_fitness_history.append(average_fitness)
+            median_fitness_history.append(median_fitness)
+            best_chromosoe_history.append(tsp_population.get_best_chromosome())
+            start_time = time()
+            tsp_population.evolve()
+            end_time = time()
+            delta_time = end_time - start_time
+            sum_time += delta_time
+            avg_time_history.append(sum_time / (i + 1))
+
+            if (i + 1) % 100 == 0 or i == 0:
+                print("Generetion #{0}\tbest = {1}\taverage = {2}\ttime = {3}\t avg = {4}".format(i + 1, best_fitness,
+                                                                                                    average_fitness,
+                                                                                                    delta_time,
+                                                                                                    sum_time / (i + 1)))
+            if sum_time > RUNTIME_THRESHOLD_IN_SEC:
+                break
+            
+            if best_fitness < SHUT_FITNESS_THRESHOLD:
+                break
+
+            if not passed_first_fitness_threshold and best_fitness < FIRST_FITNESS_THRESHOLD:
+                time_at_first_fitness_threshold = sum_time
+                generetion_at_first_fitness_threshold = i
+                passed_first_fitness_threshold = True
+        
+        
+        output_lines = ["Gen #" + str(i) + ": \t" + str(best_chromosoe_history[i]) + " : " + str(best_fitness_history[i]) + "\t avg_fitness = " + str(
+            average_fitness_history[i]) + "\t avg_time = " + str(avg_time_history[i]) + "\n" for i in range(len(best_fitness_history))]
+
+        output_lines.append("Time until best fitness is lower then {0} is {1} sec \n".format(FIRST_FITNESS_THRESHOLD, time_at_first_fitness_threshold))
+        if best_fitness < SHUT_FITNESS_THRESHOLD:
+            output_lines.append("Time until best fitness is lower then {0} is {1} sec \n".format(SHUT_FITNESS_THRESHOLD, sum_time))
+        output_file_name = "output for {0} #{1}.txt".format(NUM_OF_CHROMOSOMES, k+1)
+        with open(output_file_name, "w+") as o_file:
+            # Reading form a file
+            o_file.writelines(output_lines)
+
 
     print(f"GA completed in {time() - total_start_time} seconds")
 
