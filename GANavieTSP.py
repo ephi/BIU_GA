@@ -134,6 +134,17 @@ def create_diffetence_matrix(m):
 
 
 if __name__ == '__main__':
+    arr = [6, 27,  5, 36, 18, 26, 16, 42, 29, 35, 45, 32, 11, 10, 22,  2, 21, 15, 40, 33,  4, 28,  1, 41,
+ 25,  3, 34, 44,  9, 23, 31, 38, 24, 13, 12, 20, 46, 19, 14, 39,  8,  0,  7, 37, 30, 43, 17]
+ 
+    arr = [i+1 for i in arr]
+
+    
+    output_file_name = "tsp_output.txt"
+    with open(output_file_name, "w+") as o_file:
+        # Reading form a file
+        o_file.write("\n".join([str(city_index) for city_index in arr]))
+    # arr = [i-1 for i in arr]
     cities_coord_matrix = np.zeros((NUMBER_OF_CITIES, NUMBER_OF_COORDS + 1), dtype=np.int32)
     with open(TSP_CITIES_VALUES_FILE_NAME_CONST, "r+") as f:
         # Reading form a file
@@ -144,7 +155,16 @@ if __name__ == '__main__':
                 cities_coord_matrix[i][j] = int(coords[j])
             cities_coord_matrix[i][-1] = int(i + 1)
             i += 1
-
+    rel_cities = cities_coord_matrix[arr, :]
+    ch = TSPChromosome(tsp_cities=rel_cities)
+    m = ch.get_value()
+    dm = create_diffetence_matrix(np.delete(m, -1, axis=-1))
+    p2_dm = np.power(dm, 2)
+    s_dm = np.sqrt(np.sum(p2_dm, axis=1))
+    # a_dm = np.abs(dm)
+    s_dm = np.sum(s_dm)
+    ch.set_route_distance(s_dm)
+    dis = ch.get_route_distance()
     randomized_chromosomes = [
         TSPChromosome(tsp_cities=cities_coord_matrix).randomize_value() for i in
         range(NUM_OF_CHROMOSOMES)]
