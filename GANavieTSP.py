@@ -134,17 +134,68 @@ def create_diffetence_matrix(m):
 
 
 if __name__ == '__main__':
-    arr = [6, 27,  5, 36, 18, 26, 16, 42, 29, 35, 45, 32, 11, 10, 22,  2, 21, 15, 40, 33,  4, 28,  1, 41,
- 25,  3, 34, 44,  9, 23, 31, 38, 24, 13, 12, 20, 46, 19, 14, 39,  8,  0,  7, 37, 30, 43, 17]
+    # arr = [27,  6, 17, 43, 30, 37,  7,  0,  8, 39, 14, 11 ,10, 22, 12, 24, 13, 33,  2, 21, 15, 40, 28,  1,
+    #         25,  3, 34, 44,  9, 23, 41,  4, 38, 31, 20, 46, 19, 32, 45, 35,  5, 36, 18, 26, 16, 42, 29]
+
+    arr = [
+        11,
+12,
+15,
+40,
+9,
+1,
+8,
+38,
+31,
+44,
+36,
+6,
+37,
+19,
+27,
+17,
+43,
+30,
+28,
+7,
+18,
+46,
+33,
+20,
+47,
+21,
+32,
+39,
+48,
+5,
+42,
+24,
+10,
+45,
+35,
+4,
+26,
+2,
+29,
+34,
+41,
+16,
+22,
+3,
+23,
+14,
+25,
+13
+    ]
  
-    arr = [i+1 for i in arr]
+    # arr = [i+1 for i in arr]
 
     
-    output_file_name = "tsp_output.txt"
-    with open(output_file_name, "w+") as o_file:
-        # Reading form a file
-        o_file.write("\n".join([str(city_index) for city_index in arr]))
-    # arr = [i-1 for i in arr]
+    # output_file_name = "tsp_output.txt"
+    # with open(output_file_name, "w+") as o_file:
+    #     # Reading form a file
+    #     o_file.write("\n".join([str(city_index) for city_index in arr]))
+    arr = [i-1 for i in arr]
     cities_coord_matrix = np.zeros((NUMBER_OF_CITIES, NUMBER_OF_COORDS + 1), dtype=np.int32)
     with open(TSP_CITIES_VALUES_FILE_NAME_CONST, "r+") as f:
         # Reading form a file

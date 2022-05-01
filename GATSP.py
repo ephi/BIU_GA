@@ -1,15 +1,9 @@
-from math import ceil
 from time import time
 import numpy as np
-
-import multiprocessing as mp
-
 import GAFrameWork
 from GAFrameWork import Population
-from matplotlib import pyplot as plt
 import copy
 from enum import IntEnum
-
 
 class DebugChecksEnum(IntEnum):
     DISTANCE_CHECKS_AND_ASSERTS = 0,
@@ -227,6 +221,8 @@ def tsp_crossover(chromosome_1: TSPChromosome, chromosome_2: TSPChromosome, gene
 
 
 if __name__ == '__main__':
+
+    np.random.seed(2019)
 
     cities_str_lines = [""]
     with open(TSP_CITIES_VALUES_FILE_NAME_CONST, "r+") as tsp_cities_file_obj:
