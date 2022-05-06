@@ -3,18 +3,10 @@ import numpy as np
 import GAFrameWork
 from GAFrameWork import Population
 import copy
-from enum import IntEnum
 from matplotlib import pyplot as plt
 
-class DebugChecksEnum(IntEnum):
-    DISTANCE_CHECKS_AND_ASSERTS = 0,
-
-
 TSP_CITIES_VALUES_FILE_NAME_CONST = "tsp.txt"
-INCLUDE_DEBUG_PRINT = True
-debug_checks_dict = {
-
-}
+TSP_GA_OUTPUT_FILE = "tsp_output.txt"
 
 NUM_OF_GENERATIONS = 800000 # Probably will stop at the time threshold
 NUM_OF_CHROMOSOMES = 200
@@ -22,9 +14,10 @@ P_M = 0.5
 P_E = 0.15
 P_CO = 0.5
 
-RUNTIME_THRESHOLD_IN_SEC = 900 # 15 Mins
+RUNTIME_THRESHOLD_IN_SEC = 60 * 15 # 15 Mins
 BEST_FITNESS_THRESHOLD = 33900
-SHOW_GRAPHS = True
+SHOW_GRAPHS = False
+INCLUDE_DEBUG_PRINT = True
 
 
 def generate_all_possibilities(remaining_options: list, current_possibility_arr: list,
@@ -168,6 +161,11 @@ class TSPMutagen(GAFrameWork.Mutagen):
             self.chromosome_size = chromosome.get_chromosome_size()
             self.chromosome_indexes_range = range(self.chromosome_size)
         if severity < self.p:
+            # The following for loop is adding another type of mutation.
+            # With probability of p^2, the swap mutation will operate twice.
+            # For example, if p=0.5, than 50% (= 1-p) there is no mutation and 50% (= p) there is.
+            # If there is a mutation, 50% (= 1-p) there is only one cities swap, and 50% (= p) there are two.
+            # In conclusion, 1-p - no mutation, p*(1-p) - one swap mutaion, p*p - two swap mutations.
             for i in range(1 + round(severity / (self.p*2))):
                 indexes_to_swap = np.random.choice(self.chromosome_indexes_range, size=2, replace=False)
                 chromosome.swap_two_cities(indexes_to_swap)
@@ -258,26 +256,28 @@ if __name__ == '__main__':
     if SHOW_GRAPHS:
         best_fitness_history = []
         average_fitness_history = []
-    for i in range(0, NUM_OF_GENERATIONS):
+    for i in range(NUM_OF_GENERATIONS):
         start_time = time()
         tsp_population.evolve()
+        end_time = time()
         best_fitness = tsp_population.get_best_fitness()
         if SHOW_GRAPHS:
             best_fitness_history.append(best_fitness)
             average_fitness_history.append(tsp_population.get_average_fitness())
-        end_time = time()
         delta_time = end_time - start_time
         sum_time += delta_time
         if best_fitness < BEST_FITNESS_THRESHOLD:
             break
         if sum_time > RUNTIME_THRESHOLD_IN_SEC:
             break
-    print(f"GA completed after {sum_time} seconds, best fitness is {tsp_population.get_best_fitness()}")
+    if INCLUDE_DEBUG_PRINT:
+        print(f"GA completed after {sum_time} seconds, best fitness is {tsp_population.get_best_fitness()}")
+
     if SHOW_GRAPHS:
         plt.plot(best_fitness_history, label='Best')
         plt.plot(average_fitness_history, label="Average")
         # plt.plot(median_fitness_history, label="Median")
-        plt.title(f"N={NUM_OF_CHROMOSOMES}, G={i}, P_M={P_M}, P_E={P_E}")
+        plt.title(f"N={NUM_OF_CHROMOSOMES}, G={tsp_population.generation_num}, P_M={P_M}, P_E={P_E}, P_CO={P_CO}")
         plt.xlabel("Generation")
         plt.ylabel('Fitness')
         plt.legend()
@@ -286,7 +286,7 @@ if __name__ == '__main__':
     best_chromosome : TSPChromosome = tsp_population.get_best_chromosome()
     best_chromosome.cities_indexed_arr += 1
 
-    output_file_name = "tsp_output.txt"
+    output_file_name = TSP_GA_OUTPUT_FILE
     with open(output_file_name, "w+") as o_file:
         # Reading form a file
         o_file.write("\n".join([str(city_index) for city_index in best_chromosome.cities_indexed_arr]))
