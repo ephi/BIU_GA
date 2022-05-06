@@ -17,6 +17,7 @@ P_CO = 0.5
 RUNTIME_THRESHOLD_IN_SEC = 60 * 15 # 15 Mins
 BEST_FITNESS_THRESHOLD = 33900
 SHOW_GRAPHS = False
+SAVE_GRAPHS = True
 INCLUDE_DEBUG_PRINT = True
 
 
@@ -253,7 +254,7 @@ if __name__ == '__main__':
                             cross_over_probability=P_CO)
     sum_time = 0
     delta_time = 0
-    if SHOW_GRAPHS:
+    if SHOW_GRAPHS or SAVE_GRAPHS:
         best_fitness_history = []
         average_fitness_history = []
     for i in range(NUM_OF_GENERATIONS):
@@ -261,7 +262,7 @@ if __name__ == '__main__':
         tsp_population.evolve()
         end_time = time()
         best_fitness = tsp_population.get_best_fitness()
-        if SHOW_GRAPHS:
+        if SHOW_GRAPHS or SAVE_GRAPHS:
             best_fitness_history.append(best_fitness)
             average_fitness_history.append(tsp_population.get_average_fitness())
         delta_time = end_time - start_time
@@ -273,15 +274,19 @@ if __name__ == '__main__':
     if INCLUDE_DEBUG_PRINT:
         print(f"GA completed after {sum_time} seconds, best fitness is {tsp_population.get_best_fitness()}")
 
-    if SHOW_GRAPHS:
+    if SHOW_GRAPHS or SAVE_GRAPHS:
         plt.plot(best_fitness_history, label='Best')
         plt.plot(average_fitness_history, label="Average")
         # plt.plot(median_fitness_history, label="Median")
-        plt.title(f"N={NUM_OF_CHROMOSOMES}, G={tsp_population.generation_num}, P_M={P_M}, P_E={P_E}, P_CO={P_CO}")
+        plt.title(f"N={NUM_OF_CHROMOSOMES}, Gen={tsp_population.generation_num}, P_M={P_M}, P_E={P_E}, P_CO={P_CO}, RT={sum_time}")
         plt.xlabel("Generation")
         plt.ylabel('Fitness')
         plt.legend()
-        plt.show()
+        
+        if SAVE_GRAPHS:
+            plt.savefig(f"N={NUM_OF_CHROMOSOMES}, Gen={tsp_population.generation_num}, P_M={P_M}, P_E={P_E}, P_CO={P_CO}, RT={sum_time}.png", bbox_inches='tight')
+        if SHOW_GRAPHS:
+            plt.show()
     
     best_chromosome : TSPChromosome = tsp_population.get_best_chromosome()
     best_chromosome.cities_indexed_arr += 1
