@@ -4,6 +4,9 @@ import GAFrameWork
 from GAFrameWork import Population
 from matplotlib import pyplot as plt
 
+SHOW_GRAPHS = False
+SAVE_GRAPHS = True
+RUN_CSP = False
 
 class NQueenFitness(GAFrameWork.FitnessObject):
     def __init__(self):
@@ -222,14 +225,19 @@ if __name__ == '__main__':
                     plt.xlabel("Generation")
                     plt.ylabel('Fitness')
                     plt.legend()
-                    plt.show()
-    # Brute force solution
+                    if SAVE_GRAPHS:
+                        plt.savefig(f"N={n}, G={g}, P={p}, E={e}.png", bbox_inches='tight')
+                        print(f"An output graph has been saved")
+                    if SHOW_GRAPHS:
+                        plt.show()
 
-    start = time.perf_counter()
-    c = csp_n_queen(N_queen)
-    end = time.perf_counter()
-    print(f"CSP completed in {end - start} seconds")
-    if c is not None:
-        chromosome_stats(c, fitness_obj)
-    else:
-        print("No CSP solution was found in a reasonable time")
+    if RUN_CSP:
+        # Brute force solution
+        start = time.perf_counter()
+        c = csp_n_queen(N_queen)
+        end = time.perf_counter()
+        print(f"CSP completed in {end - start} seconds")
+        if c is not None:
+            chromosome_stats(c, fitness_obj)
+        else:
+            print("No CSP solution was found in a reasonable time")
